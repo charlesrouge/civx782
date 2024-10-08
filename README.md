@@ -32,8 +32,10 @@ then press `D` if prompted to type `F` or `D`
 
 ## How to install the virtual environment and run it on Jupyter Notebook
 
-=> Open the directory containing the `environment.yml` file and type in terminal
+=> To create the virtual environment from the yml file: open the directory containing the `environment.yml` file and type in terminal
 `conda env create -f environment.yml`
+
+NOTE: Running this command may take long time i.e 10-15 mins on the University machine. Wait patiently. Once completed, you do not need to run it again!
 
 => Or if you cannot create the environment on the University machine, still create a new environment and work in it. This will keep track of libraries used and versions as you go!
 `conda env create --name civx782`
