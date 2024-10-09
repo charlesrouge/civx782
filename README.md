@@ -1,18 +1,22 @@
 # CIVX782
 Tutorial resources for CIV4782-CIV6782 module "Resilient water infrastructure design"
 
+Below is the procedure to install things from the command line. Refer to the document on Blackboard for "less geeky" install.
+
 ## How to clone and update the repository to your Uni drive U:\Users\<username>\
 where <username> is your uni login (e.g., ciXXXX)
 
-=> In the Search bar of your machine, type `cmd` to open a command prompt.
+=> In the Search bar of your machine, type `cmd` to open a command prompt. This can be called "Command Prompt" or "Windows Powershell Command Prompt" or similar.
 
-=> Navigate to U:\Users\<username> using the `cd Users` then `cd <username>` prompts.
+=> Navigate to `U:\Users\<username>` if needed, using the `cd Users` then `cd <username>` prompts.
 
 => If it is the first time your are importing this folder type
 `git clone https://github.com/charlesrouge/civx782.git`
 
 => If it is not navigate to the civx782 folder using `cd civx782`then
 `git pull origin main`
+
+Note: there is a need to install git and that's not the case on all machines.
 
 
 ## How to run tutorials on Jupyter Notebook
@@ -25,7 +29,10 @@ C:\Users\<username>
 
 3) Copy the civx782 folder to that directory using:
 `Xcopy civx782 C:\Users\<username> /E`
-then press `D` if prompted to type `F` or `D`
+
+Then press `D` if prompted to type `F` or `D`
+Press `All` if prompted `Yes/No/All`
+Note `/E` is needed to copy subfolders and files within them; otherwise only files in the main folder are copied.
 
 4) The `civx782` folder should have magically appeared on the Jupyter Notebook main menu!
 
