@@ -128,18 +128,29 @@ def compare_flow_timeseries(reference, alternative, labels, **kwargs):
     dummy_array[:] = np.nan
     alternative_2 = kwargs.pop('alternative_2', pd.Series(dummy_array))
 
+    # Plot figure
     fig = plt.figure(figsize=(14, 8))
     ax = fig.add_subplot(1, 1, 1)
+    # Finding maximal flow to set y-axis appropriately
+    y_max = max(reference.loc[first_date:last_date].max(), alternative.loc[first_date:last_date].max())
+    if alternative_2.hasnans is False:  # There is a third time series
+        y_max = max(y_max, alternative_2.loc[first_date:last_date].max())
+
+    # Adding key plots
     ax.plot(reference.index, reference, c='b', linewidth=2, label=labels[0])
     ax.plot(reference.index, alternative, c='r', linewidth=2, label=labels[1])
     if alternative_2.hasnans is False:  # There is a third time series
         ax.plot(reference.index, alternative_2, c='k', linewidth=2, label=labels[2])
+
+    # Axes and legend specifications
     ax.set_xlabel('Date', size=16)
     ax.set_ylabel(alternative.name, size=16)
     ax.tick_params(axis='both', which='major', labelsize=14)
     ax.set_xlim(first_date, last_date)
-    ax.set_ylim(0, reference.loc[first_date:last_date].max()*1.1)
+    ax.set_ylim(0, y_max*1.1)
     ax.legend(prop={'size': 14})
+
+
 
     return fig
 
