@@ -94,7 +94,7 @@ def reliability(time_series, dynamic_threshold, above_desirable):
     return 1 - np.sum(a < b) / len(time_series)
 
 
-def all_performance_metrics(reservoir, water_balance):
+def all_metrics(reservoir, water_balance):
 
     metrics = pd.concat([rrv_indicators(water_balance['Withdrawals Baltimore (m3/s)'].to_numpy(),
                                         water_balance['Baltimore demand (m3/s)'].to_numpy(), True, 'Baltimore'),
@@ -121,7 +121,7 @@ def all_performance_metrics(reservoir, water_balance):
     # Get hydraulic head time series, assuming linear relationship between depth and lake area
     hydraulic_head = np.zeros(len(water_balance))
     for t in range(len(water_balance)):
-        depth = reservoir.get_depth(water_balance.iloc[t, -1])
+        depth = reservoir.get_height(water_balance.iloc[t, -1])
         hydraulic_head[t] = reservoir.hydropower_plant.nominal_head - reservoir.total_lake_depth + depth
 
     # Get the indicators
