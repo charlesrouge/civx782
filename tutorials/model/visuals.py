@@ -12,6 +12,7 @@ List of plotting methods within:
     - compare_flow_timeseries: plots 2 or 3 flows timeseries
     - monthly_averages: compute average annual cycle of given variable, monthly time step
     - compare_monthly_averages: same for same given variable in 2 or 3 different cases
+    - annual_average: annual average of quantity over time
 '''
 
 
@@ -259,5 +260,28 @@ def compare_fdc(reference, alternative, labels, **kwargs):
     ax.set_ylabel('Flow rate [$m^3/s$]', size=16)
     ax.tick_params(axis='both', which='major', labelsize=14)
     plt.grid()
+
+    return fig
+
+
+def annual_average(daily_data, data_label):
+    """
+    Plots the annual average of the chosen time series over time. Arguments:
+        daily_data: pandas Series of the daily data to average
+        data_label: string of quantity + unit (note first letter should be lowercase).
+    Returns the matplotlib figure created, for plotting / saving, etc.
+    """
+
+    # Convert daily data to annual
+    annual_data = daily_data.resample('YE').sum()
+
+    # PLot this
+    fig = plt.figure(figsize=(14, 8))
+    ax = fig.add_subplot(1, 1, 1)
+    ax.plot(annual_data.index.year, annual_data, c='b')
+    ax.set_xlabel('Date', size=16)
+    ax.set_ylabel('Annual ' + data_label, size=16)
+    ax.set_xlim(annual_data.index.year[0], annual_data.index.year[-1])
+    ax.tick_params(axis='both', which='major', labelsize=14)
 
     return fig
