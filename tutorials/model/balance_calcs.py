@@ -1,4 +1,8 @@
+from .func_FDC import streamflow_statistics, compute_fdc, kosugi_model, daily_exceedance, kosugi_fdc
 import numpy as np
+import pandas as pd
+import math
+from scipy import special
 
 
 def sop_full(reservoir, water_flows):
@@ -113,3 +117,57 @@ def sop_single_step(reservoir, storage_beg, inflows, site_demand, downstream_dem
         storage_end = water_available + reservoir.dead_storage
 
     return storage_end, outflows, withdrawals
+
+
+def uniform_change_model(flows_original, multiplier):
+    """
+    This function initialises the water balance with modified inflows, given the desired streamflow multiplier.
+    Arguments:
+        - flows_original: the flows DataFrame from reading the data. This copy is kept unmodified.
+        - multiplier: float, a factor by which to multiply all flows.
+    """
+
+    # Get a copy of the data so that there is an untouched original copy
+    water_balance = flows_original.copy()
+    water_balance['Total inflows (m3/s)'] = water_balance['Total inflows (m3/s)'] * multiplier
+
+    return water_balance
+
+
+def amplified_extremes_model(flows_original, model_multipliers, low_quantile):
+    """
+    This function initialises the water balance with modified inflows, given the desired inflow parameters
+    Arguments:
+        - flows_original: the flows DataFrame from reading the data. This copy is kept unmodified.
+        - multiplierSFG: list with 3 factors used to define the SFG model
+        - low_quantile: flow percentile that is modified directly by multiplier
+    """
+
+    # Get a copy of the data so that there is an untouched original copy
+    water_balance = flows_original.copy()
+
+    # 1 - Retrieve inflow (historical) data and derive streamflow statistics
+    streamflow = water_balance['Total inflows (m3/s)'].to_numpy().reshape(len(water_balance), 1)
+    mean_base, std_base, low_base = streamflow_statistics(streamflow, low_quantile, num=1, case_to_derive=1)
+
+    # 2 - Derive Flow Duration Curve (FDC) from historical data
+    fdc_flows, fdc_probs = compute_fdc(streamflow)  # Derive FDC
+
+    # 3 - derive FDC parameters for the defined scenario
+    E = math.exp(math.sqrt(2) * special.erfcinv(
+        2 * (1 - low_quantile / 100)))  # Calculate the coefficient of low percentile function
+    fdc_pars = kosugi_model(mean_base[0] * model_multipliers[0], std_base[0] * model_multipliers[1],
+                                     low_base[0] * model_multipliers[2], E)
+
+    # 4 - Return exceedance probability for each day
+    daily_probability = daily_exceedance(streamflow, fdc_probs)
+
+    # 5 - Return the original sequence of the streamflow
+    flow_future = kosugi_fdc(fdc_pars, daily_probability)
+
+    # 6 - Create a DataFrame from the NumPy array with the same index as streamflow
+    modelled_flows = pd.DataFrame({'Total inflows (m3/s)': flow_future}, index=water_balance.index)
+
+    water_balance['Total inflows (m3/s)'] = modelled_flows
+
+    return water_balance
