@@ -25,43 +25,32 @@ def sop_full(reservoir, water_flows):
     # Inflows (in m3)
     inflows = water_flows['Total inflows (m3/s)'].to_numpy() * n_sec
 
-    # Total downstream demand (in m3)
-    downstream_demands = np.zeros(len(water_flows))
-    for i in range(len(reservoir.demand_downstream)):
-        # Get column with that demand
-        demand_col = ([col for col in water_flows.columns if reservoir.demand_downstream[i].name in col])
-        # Add this demand to total demand
-        downstream_demands = downstream_demands + water_flows.loc[:, demand_col[0]].to_numpy()
-    downstream_demands = downstream_demands * n_sec  # conversion to m3
+    # Initialise downstream demand (in m3 and in numpy array format)
+    downstream_demands = downstream_demand_init(reservoir, water_flows, n_sec)
 
-    # Total at-site demands (in m3)
-    at_site_demands = np.zeros((len(water_flows), len(reservoir.demand_on_site)))
-    for i in range(len(reservoir.demand_on_site)):
-        # Get column with that demand
-        demand_col = ([col for col in water_flows.columns if reservoir.demand_on_site[i].name in col])
-        at_site_demands[:, i] = water_flows.loc[water_flows.index, demand_col[0]]
-    at_site_demands = at_site_demands * n_sec  # conversion to m3
+    # Initialise at-site demands (in m3 and in numpy array format)
+    at_site_demands = local_demand_init(reservoir, water_flows, n_sec)
 
     # Initialise outputs
     # Storage needs to account for initial storage
     storage = np.zeros(t_total + 1)
     storage[0] = reservoir.initial_storage
-    # Initialise at-site withdrawals and outflows as water balance components
+    # Initialise at-site withdrawals and release as water balance components
     withdrawals = np.zeros((t_total, len(reservoir.demand_on_site)))
-    outflows = np.zeros(t_total)
+    release = np.zeros(t_total)
 
     # Main loop
     for t in range(t_total):
 
         wb_out = sop_single_step(reservoir, storage[t], inflows[t], at_site_demands[t, :], downstream_demands[t])
         storage[t+1] = wb_out[0]
-        outflows[t] = wb_out[1]
+        release[t] = wb_out[1]
         withdrawals[t, :] = wb_out[2]
 
     # Insert data into water balance (mind the flow rates conversions back into m3/s)
     for i in range(withdrawals.shape[1]):
         water_flows['Withdrawals ' + reservoir.demand_on_site[i].name + ' (m3/s)'] = withdrawals[:, i] / n_sec
-    water_flows['Outflows (m3/s)'] = outflows / n_sec
+    water_flows['Release (m3/s)'] = release / n_sec
     water_flows['Storage (m3)'] = storage[1:]
 
     return water_flows
@@ -77,7 +66,7 @@ def sop_single_step(reservoir, storage_beg, inflows, site_demand, downstream_dem
     :param site_demand: Demand for withdrawal from reservoir over the time step (m3). Vector with length the number of demands
     :param downstream_demand: Demand for release for downstream use over the time step (m3)
     :return: storage_end (end of time step storage, m3)
-    :return: outflows (amount of water released over time step, m3)
+    :return: release (amount of water released over time step, m3)
     :return: withdrawals (to meet demand over time step at reservoir, m3)
     """
 
@@ -85,10 +74,10 @@ def sop_single_step(reservoir, storage_beg, inflows, site_demand, downstream_dem
     water_available = storage_beg - reservoir.dead_storage + inflows
 
     # Release for downstream demand (volumetric rate)
-    outflows = np.min([water_available, downstream_demand])
+    release = np.min([water_available, downstream_demand])
 
     # Update water availability
-    water_available = water_available - outflows
+    water_available = water_available - release
 
     # Height of water available in the reservoir, computed with height=0 when reservoir is empty
     height = reservoir.get_height(water_available + reservoir.dead_storage)
@@ -111,12 +100,51 @@ def sop_single_step(reservoir, storage_beg, inflows, site_demand, downstream_dem
         # Lake is full
         storage_end = reservoir.full_lake_volume
         # Excess storage is spilled
-        outflows = outflows + (water_available + reservoir.dead_storage - reservoir.full_lake_volume)
+        release = release + (water_available + reservoir.dead_storage - reservoir.full_lake_volume)
     else:
         # Lake is not full so water availability determines new storage
         storage_end = water_available + reservoir.dead_storage
 
-    return storage_end, outflows, withdrawals
+    return storage_end, release, withdrawals
+
+
+def downstream_demand_init(reservoir, water_flows, n_sec):
+    """
+    Initialise downstream demand for the water balance, in m3 and in numpy array format
+    :param reservoir: object of the Reservoir class
+    :param water_flows: water balance DataFrame with the demands
+    :param n_sec: number of seconds in a time step
+    :return: a numpy array of downstream demands in the correct format
+    """
+
+    downstream_demands = np.zeros(len(water_flows))
+    for i in range(len(reservoir.demand_downstream)):
+        # Get column with that demand
+        demand_col = ([col for col in water_flows.columns if reservoir.demand_downstream[i].name in col])
+        # Add this demand to total demand
+        downstream_demands = downstream_demands + water_flows.loc[:, demand_col[0]].to_numpy()
+    downstream_demands = downstream_demands * n_sec  # conversion to m3
+
+    return downstream_demands
+
+
+def local_demand_init(reservoir, water_flows, n_sec):
+    """
+    Initialise at-site demand for the water balance, in m3 and in numpy array format
+    :param reservoir: object of the Reservoir class
+    :param water_flows: water balance DataFrame with the demands
+    :param n_sec: number of seconds in a time step
+    :return: a numpy array of downstream demands in the correct format
+    """
+
+    at_site_demands = np.zeros((len(water_flows), len(reservoir.demand_on_site)))
+    for i in range(len(reservoir.demand_on_site)):
+        # Get column with that demand
+        demand_col = ([col for col in water_flows.columns if reservoir.demand_on_site[i].name in col])
+        at_site_demands[:, i] = water_flows.loc[water_flows.index, demand_col[0]]
+    at_site_demands = at_site_demands * n_sec  # conversion to m3
+
+    return at_site_demands
 
 
 def uniform_change_model(flows_original, multiplier):

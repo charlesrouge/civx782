@@ -38,6 +38,12 @@ class Reservoir:
         # Make sure volume is bounded
         return 2 * np.divide(np.minimum(self.full_lake_volume, np.maximum(0, volume)), self.get_surface_area(volume))
 
+    def area_from_height(self, height):
+        return self.full_lake_area * height / self.total_lake_depth
+
+    def volume_from_height(self, height):
+        return height * self.area_from_height(height) / 2
+
     # Method to add an on-site demand
     def add_on_site_demand(self, demand):
         self.demand_on_site.append(demand)
@@ -48,10 +54,10 @@ class Reservoir:
         self.demand_downstream.append(demand)
         return None
 
-    # Method to calculate daily hydropower production from time series of daily outflows
+    # Method to calculate daily hydropower production from time series of daily releases
     def daily_production(self, water_balance):
         """
-        param water_balance: pandas DataFrame of the water balance, containing columns 'Outflows (m3/s)' and
+        param water_balance: pandas DataFrame of the water balance, containing columns 'Release (m3/s)' and
                             'Storage (m3)', and indexed on dates
         return: pandas Series of daily hydropower production in MWh, same index
         """
@@ -59,12 +65,12 @@ class Reservoir:
         n_steps = len(water_balance)
 
         # Get release time series (capped by max release)
-        release = np.minimum(water_balance['Outflows (m3/s)'].values, np.ones(n_steps) *
+        release = np.minimum(water_balance['Release (m3/s)'].values, np.ones(n_steps) *
                              self.hydropower_plant.max_release)
 
         # Get hydraulic head time series, assuming linear relationship between depth and lake area
         hydraulic_head = self.hydropower_plant.nominal_head - self.total_lake_depth + \
-                         self.get_height(water_balance.iloc[:, -1])
+                         self.get_height(water_balance.loc[:, 'Storage (m3)'])
 
         # Deduce daily hydropower production time series (in MW)
         hydropower_daily = pd.Series(index=water_balance.index,

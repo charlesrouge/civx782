@@ -102,9 +102,9 @@ def all_metrics(reservoir, water_balance):
                                         water_balance['Chester demand (m3/s)'].to_numpy(), True, 'Chester'),
                          rrv_indicators(water_balance['Withdrawals Nuclear plant (m3/s)'].to_numpy(),
                                         water_balance['Nuclear plant demand (m3/s)'].to_numpy(), True, 'Nuclear'),
-                         rrv_indicators(water_balance['Outflows (m3/s)'].to_numpy(),
+                         rrv_indicators(water_balance['Release (m3/s)'].to_numpy(),
                                         water_balance['Environmental demand (m3/s)'].to_numpy(), True, 'Env. flows'),
-                         rrv_indicators(water_balance['Outflows (m3/s)'].to_numpy(),
+                         rrv_indicators(water_balance['Release (m3/s)'].to_numpy(),
                                         15000 * np.ones(len(water_balance)), False, 'Flooding')],
                         axis=0, ignore_index=True)
 
@@ -146,7 +146,7 @@ def all_metrics(reservoir, water_balance):
     metrics.loc[2, 'Volumetric reliability'] = totals['Withdrawals Nuclear plant (m3/s)'] / totals[
         'Nuclear plant demand (m3/s)']
     metrics.loc[3, 'Volumetric reliability'] = np.sum(
-        np.minimum(water_balance['Environmental demand (m3/s)'], water_balance['Outflows (m3/s)'])) / totals[
+        np.minimum(water_balance['Environmental demand (m3/s)'], water_balance['Release (m3/s)'])) / totals[
                                                    'Environmental demand (m3/s)']
 
     return metrics

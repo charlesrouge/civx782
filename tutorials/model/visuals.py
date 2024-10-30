@@ -68,9 +68,9 @@ def compare_storage_timeseries(reservoir, storage_1, storage_2, labels, **kwargs
     fig = plt.figure(figsize=(14, 8))
     ax = fig.add_subplot(1, 1, 1)
     ax.plot(storage_1.index, storage_1, c='b', linewidth=2, label=labels[0])
-    ax.plot(storage_1.index, storage_2, c='r', linewidth=2, label=labels[1])
+    ax.plot(storage_2.index, storage_2, c='r', linewidth=2, label=labels[1])
     if storage_3.hasnans is False:  # There is a third time series
-        ax.plot(storage_1.index, storage_3, c='k', linewidth=2, label=labels[2])
+        ax.plot(storage_3.index, storage_3, c='k', linewidth=2, label=labels[2])
     ax.plot(storage_1.index, reservoir.dead_storage * np.ones(len(storage_1)), c='black', linestyle='--',
             linewidth=2, label='Dead storage')
     legend = ax.legend(loc=4, prop={'size': 14})
@@ -139,9 +139,9 @@ def compare_flow_timeseries(reference, alternative, labels, **kwargs):
 
     # Adding key plots
     ax.plot(reference.index, reference, c='b', linewidth=2, label=labels[0])
-    ax.plot(reference.index, alternative, c='r', linewidth=2, label=labels[1])
+    ax.plot(alternative.index, alternative, c='r', linewidth=2, label=labels[1])
     if alternative_2.hasnans is False:  # There is a third time series
-        ax.plot(reference.index, alternative_2, c='k', linewidth=2, label=labels[2])
+        ax.plot(alternative_2.index, alternative_2, c='k', linewidth=2, label=labels[2])
 
     # Axes and legend specifications
     ax.set_xlabel('Date', size=16)
