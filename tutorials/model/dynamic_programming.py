@@ -6,11 +6,23 @@ import datetime
 
 def backward_hp_max(reservoir, water_flows, first_year, nb_states, nb_decisions, **kwargs):
     """
-
+    Backward dynamic programming, for a 2-year period by default, and on a daily time step.
+    The dynamic programming aims to maximise hydropower production.
+    Note that here is no restriction on still meeting all demands as long as there's water.
+    :param reservoir: object of Reservoir class
+    :param water_flows: pandas DataFrame, with the input water balance components (inflows, demands)
+    :param first_year: int, year programme starts
+    :param nb_states: int, number of states in discretisation of state variable
+    :param nb_decisions: int, number of decisions considered in decision range
+    :param kwargs: "threshold_volume" a storage volume below which policy reverts to SOP to protect demands
+                   "nb_years" duration of dynamic programming, default 2
+    :return: the value and release tables, as numpy arrays
     """
 
-    # Optional argument
+    # Optional arguments
+    nb_years = kwargs.pop("nb_years", 2)
     threshold_volume = kwargs.pop("threshold_volume", reservoir.dead_storage)
+
 
     # Parameters
     n_sec = 86400  # Number of seconds in a day (the time step)
@@ -20,7 +32,7 @@ def backward_hp_max(reservoir, water_flows, first_year, nb_states, nb_decisions,
                              (reservoir.full_lake_volume - reservoir.dead_storage))
 
     # Initialise inflows and demands
-    time_mask = (water_flows.index.year >= first_year) & (water_flows.index.year < first_year + 2)
+    time_mask = (water_flows.index.year >= first_year) & (water_flows.index.year < first_year + nb_years)
     h2o_balance = water_flows.iloc[time_mask, :].copy()
     total_local_demands = local_demand_init(reservoir, h2o_balance, n_sec)
     total_downstream_demands = downstream_demand_init(reservoir, h2o_balance, n_sec)
@@ -151,6 +163,16 @@ def value_update(immediate_value, future_state, future_value, mesh):
 
 
 def forward_loop(reservoir, water_flows, year_beg, release_table, **kwargs):
+    """
+    Forward loop using the release table to determine actual sequence of release decisions for a reservoir.
+        :param reservoir: object of Reservoir class
+        :param water_flows: pandas DataFrame, with the input water balance components (inflows, demands)
+        :param year_beg: int, year programme starts
+        :param release_table: numpy array containing the release decision for each discretised state in range
+        :param kwargs: "threshold_volume" a storage volume below which policy reverts to SOP to protect demands
+                       "nb_years" duration of dynamic programming, default 2. Must match "nb_years" in backward phase.
+        :return: the value and release tables, as numpy arrays
+    """
 
     # Parameters
     n_sec = 86400  # Number of seconds in a day (the time step)
