@@ -62,17 +62,25 @@ def rrv_indicators(time_series, dynamic_threshold, above_desirable, name, **kwar
         # Time increment so while loop concludes
         t = t+1
 
-    # Resilience
-    indicators.loc[0, 'Resilience (-)'] = event_count / (n_steps * (1 - indicators.loc[0, 'Reliability (0-1)']))
-
-    # Vulnerability (as a percentage)
-    if vul_unit == '%':
-        indicators.loc[0, 'Vulnerability'] = "{:.0f}".format(np.mean(magnitude) * 100) + '%'
-    else:
-        indicators.loc[0, 'Vulnerability'] = "{:.2f}".format(np.mean(magnitude)) + vul_unit
-
-    # Finally, exporting the failure count
+    # Exporting the failure count
     indicators.loc[0, 'Failure count'] = event_count
+
+    if event_count > 0:  # there are failures
+
+        # Resilience
+        indicators.loc[0, 'Resilience (-)'] = event_count / (n_steps * (1 - indicators.loc[0, 'Reliability (0-1)']))
+
+        # Vulnerability (as a percentage)
+        if vul_unit == '%':
+            indicators.loc[0, 'Vulnerability'] = "{:.0f}".format(np.mean(magnitude) * 100) + '%'
+        else:
+            indicators.loc[0, 'Vulnerability'] = "{:.2f}".format(np.mean(magnitude)) + vul_unit
+
+    else:
+
+        # No failure: empirical resilience is infinite and vulnerability is 0
+        indicators.loc[0, 'Resilience (-)'] = np.inf
+        indicators.loc[0, 'Vulnerability'] = 0
 
     return indicators
 

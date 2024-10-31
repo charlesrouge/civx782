@@ -171,7 +171,7 @@ def forward_loop(reservoir, water_flows, year_beg, release_table, **kwargs):
         :param release_table: numpy array containing the release decision for each discretised state in range
         :param kwargs: "threshold_volume" a storage volume below which policy reverts to SOP to protect demands
                        "nb_years" duration of dynamic programming, default 2. Must match "nb_years" in backward phase.
-        :return: the value and release tables, as numpy arrays
+        :return: the water balance pandas DataFrame
     """
 
     # Parameters
@@ -183,7 +183,7 @@ def forward_loop(reservoir, water_flows, year_beg, release_table, **kwargs):
     # Initialise water balance
     h2o_balance = water_flows.loc[datetime.date(year_beg, 1, 1): datetime.date(year_beg, 1, 1)
                                   + datetime.timedelta(days=len(release_table)), :].copy()
-    total_local_demands = local_demand_init(reservoir, water_flows, n_sec)
+    total_local_demands = local_demand_init(reservoir, h2o_balance, n_sec)
 
     # Initialise water balance outputs
     for i in range(total_local_demands.shape[1]):
