@@ -117,13 +117,17 @@ def define_reservoir(reservoir_name, downstream_demand_names, direct_demand_name
     """
 
     # First we download the key data
-    key_parameters = pd.read_excel('data/' + reservoir_name + '_data.xlsx', sheet_name='Reservoir characteristics')
+    key_parameters = pd.read_excel('data/' + reservoir_name + '_data.xlsx', sheet_name='Reservoir characteristics',
+                                   dtype={'Key parameter and unit': str, 'Value': float})
 
     # Define hydropower plant characteristics from file
     nominal_head = key_parameters.iloc[3, key_parameters.columns.get_loc('Value')]
     installed_capacity = key_parameters.iloc[4, key_parameters.columns.get_loc('Value')]
     max_release = key_parameters.iloc[5, key_parameters.columns.get_loc('Value')]
-    firm_power = key_parameters.iloc[-1, key_parameters.columns.get_loc('Value')]
+    if key_parameters['Key parameter and unit'].str.contains('Firm').iloc[-1]:  # There's a firm power
+        firm_power = key_parameters.iloc[-1, key_parameters.columns.get_loc('Value')]
+    else:
+        firm_power = 0
     hpp = Hydropower(installed_capacity, nominal_head, max_release, firm_power_mw=firm_power)
 
     # Extract key reservoir characteristics
