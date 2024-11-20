@@ -158,3 +158,16 @@ def all_metrics(reservoir, water_balance):
                                                    'Environmental demand (m3/s)']
 
     return metrics
+
+
+def regret(x, ref_value, more_desired):
+    """
+    x: vector of performance, numpy array
+    ref_value: float, reference value from which to compute regret
+    more_desired: boolean, if True, lower values lead to more regret
+    """
+
+    if more_desired is True:
+        return (ref_value - x) / ref_value
+    else:
+        return (x - ref_value) / ref_value
